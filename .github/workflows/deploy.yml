@@ -29,4 +29,4 @@ jobs:
           output_location: "public"           # Same as app_location
           skip_app_build: true                # No build step needed
           api_location: "api/GetVisitorCount" # Your API folder
-          routes_location: "public/routes.json" # Optional for custom routes
+          # routes_location: "public/routes.json" # Optional for custom routes
