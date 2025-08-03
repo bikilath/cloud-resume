@@ -4,15 +4,16 @@ async function updateCounter() {
   const counterEl = document.getElementById('counter');
   
   try {
+    // Show loading state
+    counterEl.textContent = '...';
+    
     // 1. First increment the counter (POST)
     const incrementResponse = await fetch(API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     });
     
-    if (!incrementResponse.ok) throw new Error('Increment failed');
+    if (!incrementResponse.ok) throw new Error('Failed to increment counter');
 
     // 2. Then get the updated count (GET)
     const getResponse = await fetch(API_URL);
@@ -21,6 +22,7 @@ async function updateCounter() {
     const data = await getResponse.json();
     counterEl.textContent = data.count;
     counterEl.style.color = '';
+    
   } catch (error) {
     console.error('Counter error:', error);
     counterEl.textContent = '0 (offline)';
