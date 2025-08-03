@@ -2,24 +2,20 @@ import logging
 import os
 import json
 import azure.functions as func
-from azure.data.tables import TableClient, UpdateMode
+from azure.data.tables import TableClient
 from azure.core.exceptions import ResourceNotFoundError
 
-TABLE_NAME = 'ResumeVisits'
-PARTITION_KEY = 'counter'
-ROW_KEY = 'visits'
-
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Processing request for resume visit counter.')
+    logging.info('Python HTTP trigger function processed a request.')
     
-    cosmos_conn_str = os.getenv('COSMOSDB_CONNECTION_STRING')
-    if not cosmos_conn_str:
-        return func.HttpResponse("Missing DB connection", status_code=500)
-
+    connection_string = os.getenv("COSMOS_CONNECTION_STRING")
+    if not connection_string:
+        return func.HttpResponse("Database connection not configured", status_code=500)
+    
     try:
         table_client = TableClient.from_connection_string(
-            conn_str=cosmos_conn_str,
-            table_name=TABLE_NAME
+            conn_str=connection_string,
+            table_name="VisitorCounts"
         )
         
         if req.method == "GET":
@@ -29,30 +25,35 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         else:
             return func.HttpResponse("Method not allowed", status_code=405)
             
-    except Exception as e:
-        logging.error(f"Error: {str(e)}")
-        return func.HttpResponse("Server error", status_code=500)
+    except Exception as ex:
+        logging.error(f"Error: {str(ex)}")
+        return func.HttpResponse("Internal server error", status_code=500)
 
 def handle_get(table_client):
     try:
-        entity = table_client.get_entity(PARTITION_KEY, ROW_KEY)
+        entity = table_client.get_entity(partition_key="1", row_key="1")
         count = entity.get('Count', 0)
     except ResourceNotFoundError:
         count = 0
-    return func.HttpResponse(json.dumps({'count': count}), mimetype="application/json")
+    return func.HttpResponse(
+        json.dumps({"count": count}),
+        mimetype="application/json"
+    )
 
 def handle_post(table_client):
     try:
-        entity = table_client.get_entity(PARTITION_KEY, ROW_KEY)
-        current = entity.get('Count', 0)
+        entity = table_client.get_entity(partition_key="1", row_key="1")
+        count = entity.get('Count', 0) + 1
     except ResourceNotFoundError:
-        current = 0
-    
-    new_count = current + 1
+        count = 1
+        
     table_client.upsert_entity({
-        'PartitionKey': PARTITION_KEY,
-        'RowKey': ROW_KEY,
-        'Count': new_count
-    }, mode=UpdateMode.REPLACE)
+        "PartitionKey": "1",
+        "RowKey": "1",
+        "Count": count
+    })
     
-    return func.HttpResponse(json.dumps({'count': new_count}), mimetype="application/json")
+    return func.HttpResponse(
+        json.dumps({"count": count}),
+        mimetype="application/json"
+    )
