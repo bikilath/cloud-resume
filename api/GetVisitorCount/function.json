@@ -7,7 +7,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get", "post", "options"],
-      "route": "visitor"  // This defines the /api/visitor path
+      "route": "visitor"
     },
     {
       "type": "http",
