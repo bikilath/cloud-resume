@@ -1,30 +1,30 @@
-// Visitor counter with proper incrementing
+const API_URL = 'https://bikila-resume-api-gyckc6b0g4fwf6gt.uksouth-01.azurewebsites.net/api/visitor';
+
 async function updateCounter() {
-  const counterElement = document.getElementById('counter');
+  const counterEl = document.getElementById('counter');
   
   try {
-    // First increment the counter (POST)
-    const incrementResponse = await fetch('/api/GetVisitorCount', {
-      method: 'POST'
+    // First get current count
+    const getResponse = await fetch(API_URL);
+    if (!getResponse.ok) throw new Error(await getResponse.text());
+    
+    // Then increment (POST)
+    const postResponse = await fetch(API_URL, { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
     
-    if (!incrementResponse.ok) {
-      throw new Error('Failed to increment counter');
-    }
-    
-    // Then get the updated count (GET)
-    const getResponse = await fetch('/api/GetVisitorCount');
+    // Update display
     const data = await getResponse.json();
-    
-    counterElement.textContent = data.count;
-    counterElement.style.color = ''; // Reset error color if any
-    
+    counterEl.textContent = data.count;
+    counterEl.style.color = ''; // Reset error style
   } catch (error) {
     console.error('Counter error:', error);
-    counterElement.textContent = '0 (offline)';
-    counterElement.style.color = '#ff6b6b';
+    counterEl.textContent = '0 (offline)';
+    counterEl.style.color = '#ff6b6b';
   }
 }
 
-// Initialize when page loads
 window.addEventListener('DOMContentLoaded', updateCounter);
