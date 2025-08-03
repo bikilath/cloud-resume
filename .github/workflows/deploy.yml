@@ -4,29 +4,23 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    types: [opened, synchronize, reopened]
     branches: [ "main" ]
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm install  # Ensures dependencies are installed
 
       - name: Build and Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: "upload"  # <-- THIS IS THE CRITICAL MISSING PARAMETER
-          app_location: "/"
-          output_location: "build"
+          action: "upload"
+          app_location: "src"  # Adjust to your source folder
+          output_location: "dist"  # Adjust to your build output folder
           app_build_command: "npm run build"
-          
-          # Optional parameters with defaults:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
           skip_app_build: false
-          api_location: ""  # Only needed if you have an API
-          deployment_environment: "production"
-          # Environment settings
-          production_branch: "main"        # Branch that deploys to production
