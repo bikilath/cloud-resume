@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get", "post", "options"],
-      "route": "GetVisitorCount"
+      "route": "visitor"  // Changed to match Python code
     },
     {
       "type": "http",
