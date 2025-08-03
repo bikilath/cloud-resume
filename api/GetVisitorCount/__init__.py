@@ -1,74 +1,41 @@
-import logging
-import os
-import json
 import azure.functions as func
-from azure.cosmos import CosmosClient
-from azure.core.exceptions import ResourceNotFoundError
+from azure.data.tables import TableServiceClient
+import os
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Python HTTP trigger function processed a request.')
+    # Connect to Table Storage
+    connection_string = os.getenv("AzureWebJobsStorage")  # Uses Function App's storage
+    table_client = TableServiceClient.from_connection_string(
+        connection_string).get_table_client("VisitorCounts")
     
-    # Initialize Cosmos DB Table API client
-    client = CosmosClient.from_connection_string(os.getenv("COSMOS_CONNECTION_STRING"))
-    database = client.get_database_client("resume-db")
-    container = database.get_container_client("visitorCounts")
+    # Ensure table exists
+    table_client.create_table_if_not_exists()
     
     # CORS headers
     headers = {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type"
+        "Access-Control-Allow-Methods": "GET, POST"
     }
 
-    if req.method == "GET":
-        try:
-            item = container.read_item(item="1", partition_key="counter")
-            return func.HttpResponse(
-                body=json.dumps({"count": item["count"]}),
-                status_code=200,
-                headers=headers,
-                mimetype="application/json"
-            )
-        except ResourceNotFoundError:
-            # Initialize counter if not exists
-            container.upsert_item({
-                "id": "1",
-                "partitionKey": "counter",
-                "count": 0
-            })
-            return func.HttpResponse(
-                body=json.dumps({"count": 0}),
-                status_code=200,
-                headers=headers,
-                mimetype="application/json"
-            )
+    try:
+        entity = table_client.get_entity(
+            partition_key="CounterPartition", 
+            row_key="GlobalCounter"
+        )
+        count = entity['Count'] + 1 if req.method == "POST" else entity['Count']
+    except:
+        count = 1 if req.method == "POST" else 0
 
-    elif req.method == "POST":
-        try:
-            item = container.read_item(item="1", partition_key="counter")
-            current_count = item["count"] + 1
-            container.upsert_item({
-                "id": "1",
-                "partitionKey": "counter",
-                "count": current_count
-            })
-            return func.HttpResponse(
-                body=json.dumps({"count": current_count}),
-                status_code=200,
-                headers=headers,
-                mimetype="application/json"
-            )
-        except Exception as e:
-            logging.error(f"POST error: {str(e)}")
-            return func.HttpResponse(
-                body=json.dumps({"error": "Internal server error"}),
-                status_code=500,
-                headers=headers,
-                mimetype="application/json"
-            )
+    # Update counter
+    table_client.upsert_entity({
+        "PartitionKey": "CounterPartition",
+        "RowKey": "GlobalCounter",
+        "Count": count
+    })
 
     return func.HttpResponse(
-        "Method not allowed",
-        status_code=405,
-        headers=headers
+        body=f'{{"count": {count}}}',
+        status_code=200,
+        headers=headers,
+        mimetype="application/json"
     )
