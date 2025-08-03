@@ -2,58 +2,98 @@ import logging
 import os
 import json
 import azure.functions as func
-from azure.data.tables import TableClient
-from azure.core.exceptions import ResourceNotFoundError
+from azure.cosmos import CosmosClient
+from azure.core.exceptions import CosmosResourceNotFoundError
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
     
-    connection_string = os.getenv("COSMOS_CONNECTION_STRING")
-    if not connection_string:
-        return func.HttpResponse("Database connection not configured", status_code=500)
-    
+    # Initialize Cosmos DB client
     try:
-        table_client = TableClient.from_connection_string(
-            conn_str=connection_string,
-            table_name="VisitorCounts"
-        )
+        client = CosmosClient.from_connection_string(os.getenv("AzureCosmosDBConnectionString"))
+        database = client.get_database_client("resume-db")
+        container = database.get_container_client("visitorCounts")
         
+        # Handle CORS preflight
+        if req.method == "OPTIONS":
+            return func.HttpResponse(
+                status_code=200,
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type"
+                }
+            )
+        
+        # Handle GET request
         if req.method == "GET":
-            return handle_get(table_client)
-        elif req.method == "POST":
-            return handle_post(table_client)
-        else:
-            return func.HttpResponse("Method not allowed", status_code=405)
+            try:
+                item = container.read_item(item="1", partition_key="1")
+                count = item.get("count", 0)
+            except CosmosResourceNotFoundError:
+                count = 0
+                container.upsert_item({
+                    "id": "1",
+                    "count": count,
+                    "partitionKey": "1"
+                })
             
-    except Exception as ex:
-        logging.error(f"Error: {str(ex)}")
-        return func.HttpResponse("Internal server error", status_code=500)
-
-def handle_get(table_client):
-    try:
-        entity = table_client.get_entity(partition_key="1", row_key="1")
-        count = entity.get('Count', 0)
-    except ResourceNotFoundError:
-        count = 0
-    return func.HttpResponse(
-        json.dumps({"count": count}),
-        mimetype="application/json"
-    )
-
-def handle_post(table_client):
-    try:
-        entity = table_client.get_entity(partition_key="1", row_key="1")
-        count = entity.get('Count', 0) + 1
-    except ResourceNotFoundError:
-        count = 1
+            return func.HttpResponse(
+                body=json.dumps({"count": count}),
+                status_code=200,
+                headers={
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
         
-    table_client.upsert_entity({
-        "PartitionKey": "1",
-        "RowKey": "1",
-        "Count": count
-    })
+        # Handle POST request
+        elif req.method == "POST":
+            try:
+                item = container.read_item(item="1", partition_key="1")
+                count = item.get("count", 0) + 1
+                container.upsert_item({
+                    "id": "1",
+                    "count": count,
+                    "partitionKey": "1"
+                })
+                
+                return func.HttpResponse(
+                    body=json.dumps({"count": count}),
+                    status_code=200,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            
+            except Exception as e:
+                logging.error(f"POST error: {str(e)}")
+                return func.HttpResponse(
+                    body=json.dumps({"error": "Internal server error"}),
+                    status_code=500,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+        
+        else:
+            return func.HttpResponse(
+                "Method not allowed",
+                status_code=405,
+                headers={
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
     
-    return func.HttpResponse(
-        json.dumps({"count": count}),
-        mimetype="application/json"
-    )
+    except Exception as e:
+        logging.error(f"Database connection error: {str(e)}")
+        return func.HttpResponse(
+            body=json.dumps({"error": "Database connection failed"}),
+            status_code=500,
+            headers={
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
