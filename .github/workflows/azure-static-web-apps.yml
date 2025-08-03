@@ -2,33 +2,22 @@ name: Azure Static Web Apps CI/CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    types: [opened, synchronize, reopened]
 
 jobs:
-  build_and_deploy:
+  deploy:
     runs-on: ubuntu-latest
+    name: Deploy Static Site
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # Optional: Setup Python if your API uses Python
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      # Optional: Install API dependencies (for local testing only, Azure will handle it during deployment)
-      - name: Install API dependencies
-        run: |
-          if [ -f api/GetVisitorCount/requirements.txt ]; then pip install -r api/GetVisitorCount/requirements.txt; fi
-
+      - uses: actions/checkout@v4
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          app_location: "public"
-          api_location: "api/GetVisitorCount"
-          output_location: "public"
-          skip_app_build: true
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "public"  # Your HTML root
+          output_location: ""     # Deploys the entire public folder as-is
+          skip_app_build: true   # No build needed
