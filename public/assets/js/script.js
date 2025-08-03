@@ -1,15 +1,30 @@
-// Update counter (call this on page load)
-async function getCount() {
-  const response = await fetch('/api/GetVisitorCount');
-  const data = await response.json();
-  document.getElementById('counter').textContent = data.count;
+// Visitor counter with proper incrementing
+async function updateCounter() {
+  const counterElement = document.getElementById('counter');
+  
+  try {
+    // First increment the counter (POST)
+    const incrementResponse = await fetch('/api/GetVisitorCount', {
+      method: 'POST'
+    });
+    
+    if (!incrementResponse.ok) {
+      throw new Error('Failed to increment counter');
+    }
+    
+    // Then get the updated count (GET)
+    const getResponse = await fetch('/api/GetVisitorCount');
+    const data = await getResponse.json();
+    
+    counterElement.textContent = data.count;
+    counterElement.style.color = ''; // Reset error color if any
+    
+  } catch (error) {
+    console.error('Counter error:', error);
+    counterElement.textContent = '0 (offline)';
+    counterElement.style.color = '#ff6b6b';
+  }
 }
 
-// Increment counter (call this when needed)
-async function incrementCount() {
-  await fetch('/api/GetVisitorCount', { method: 'POST' });
-  await getCount(); // Refresh display
-}
-
-// Initialize
-window.addEventListener('DOMContentLoaded', getCount);
+// Initialize when page loads
+window.addEventListener('DOMContentLoaded', updateCounter);
