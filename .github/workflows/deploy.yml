@@ -1,30 +1,38 @@
-name: Deploy Cloud Resume
+name: Azure Static Web Apps CI/CD
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'public/**'
-      - 'api/**'
-      - '.github/workflows/deploy.yml'
+    branches: [ "main" ]  # Trigger on pushes to main branch
+  pull_request:
+    branches: [ "main" ]  # Trigger on PRs to main branch
 
 jobs:
-  deploy:
+  build_and_deploy:
     runs-on: ubuntu-latest
-    environment: production
-
+    name: Build and Deploy
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4  # Checkout your code
 
-      - name: Deploy to Azure Static Web Apps
+      - name: Build and Deploy
+        id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
+          # REQUIRED: Your Azure Static Web Apps deployment token
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: "upload"
-          app_location: "public"
-          api_location: "api" 
-          output_location: ""
-          skip_app_build: true
-          skip_api_build: false
+          
+          # App build settings (adjust for your framework)
+          app_location: "/"               # Location of your app code
+          output_location: "build"         # Built app output folder (e.g., Next.js/Vite/Svelte)
+          app_build_command: "npm run build"  # Your build command
+          
+          # Optional settings:
+          skip_app_build: false            # Set true to skip build (if using pre-built files)
+          api_location: "api"              # Location of API code (if applicable)
+          api_build_command: "npm run build --if-present"
+          routes_location: "routes.json"   # Custom routes file (optional)
+          
+          # Environment settings
+          deployment_environment: "production"  # Matches your SWA environment
+          production_branch: "main"        # Branch that deploys to production
