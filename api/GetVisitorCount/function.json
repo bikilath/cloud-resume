@@ -1,4 +1,5 @@
 {
+  "scriptFile": "__init__.py",
   "bindings": [
     {
       "authLevel": "anonymous",
@@ -6,13 +7,12 @@
       "direction": "in",
       "name": "req",
       "methods": ["get", "post", "options"],
-      "route": "visitor"  // Changed to match Python code
+      "route": "visitor"  // This defines the /api/visitor path
     },
     {
       "type": "http",
       "direction": "out",
       "name": "$return"
     }
-  ],
-  "scriptFile": "__init__.py"
+  ]
 }
