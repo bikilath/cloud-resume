@@ -1,0 +1,17 @@
+# Azure Function local settings
+api/local.settings.json
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Environment files
+.env
+*.env
+
+# IDE files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
