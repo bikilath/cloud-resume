@@ -12,12 +12,15 @@ jobs:
     name: Deploy Static Site
     steps:
       - uses: actions/checkout@v4
+      - name: Verify file structure
+        run: |
+          ls -R public
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "public"  # Your HTML root
-          output_location: ""     # Deploys the entire public folder as-is
-          skip_app_build: true   # No build needed
+          app_location: "public"
+          output_location: ""
+          skip_app_build: true
