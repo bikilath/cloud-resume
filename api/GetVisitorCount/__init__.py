@@ -12,7 +12,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             status_code=200,
             headers={
-                "Access-Control-Allow-Origin": https://ambitious-forest-0b0181503.2.azurestaticapps.net",
+                "Access-Control-Allow-Origin": "https://ambitious-forest-0b0181503.2.azurestaticapps.net",
             }
         )
     
@@ -41,7 +41,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             body=f'{{"count": {count}}}',
             status_code=200,
             headers={
-                "Access-Control-Allow-Origin": "https://lively-dune-0dcea4703.1.azurestaticapps.net",
+               "Access-Control-Allow-Origin": "https://ambitious-forest-0b0181503.2.azurestaticapps.net",
                 "Content-Type": "application/json"
             }
         )
