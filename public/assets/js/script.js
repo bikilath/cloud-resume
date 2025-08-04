@@ -1,4 +1,4 @@
-const API_URL = 'https://bikila-resume-api-gyckc6b0g4fwf6gt.uksouth-01.azurewebsites.net/api/visitor';
+const API_URL = 'https://ambitious-forest-0b0181503.azurestaticapps.net/api/visitor/';
 
 async function updateCounter() {
   const counterEl = document.getElementById('counter');
