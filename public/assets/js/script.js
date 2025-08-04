@@ -1,5 +1,4 @@
-const API_URL = 'https://ambitious-forest-0b0181503.azurestaticapps.net/api/visitor/';
-
+const API_URL = 'https://ambitious-forest-0b0181503.2.azurestaticapps.net/api/visitor/';
 async function updateCounter() {
   const counterEl = document.getElementById('counter');
   try {
