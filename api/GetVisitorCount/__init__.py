@@ -12,9 +12,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             status_code=200,
             headers={
-                "Access-Control-Allow-Origin": "https://lively-dune-0dcea4703.1.azurestaticapps.net",
-                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type"
+                "Access-Control-Allow-Origin": https://ambitious-forest-0b0181503.2.azurestaticapps.net",
             }
         )
     
