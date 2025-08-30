@@ -28,7 +28,7 @@ The static website is automatically deployed to GitHub Pages when changes are pu
    - Set Source to "GitHub Actions"
    - The workflow will handle the rest automatically
 
-The site will be available at `https://<your-username>.github.io/cloud-resume/`
+The site will be available at `https://bikilath.github.io/cloud-resume/`
 
 No additional secrets are required as GitHub Pages deployment uses built-in GitHub token and permissions.
 
