@@ -1,43 +1,72 @@
 # Cloud Resume Challenge - Azure
 
-This repository contains my implementation of the [Cloud Resume Challenge](https://cloudresumechallenge.dev/) for Azure.
+A personal cloud portfolio project combining a static resume website, a Python visitor-counter API and GitHub Actions deployment workflows.
 
-## Project Structure
+## Architecture
 
-- `frontend/`: Contains the static website files (HTML, CSS, JS)
-- `backend/`: Contains the Azure Function code and infrastructure as code templates
-- `.github/workflows/`: Contains GitHub Actions workflows for CI/CD
+```text
+Browser -> Static website (public/)
+                  |
+                  | POST /api/visitor/
+                  v
+          Azure Functions (Python)
+                  |
+                  v
+          Azure Table Storage
+```
 
-## Technologies Used
+The counter implementation uses **Azure Table Storage**, not Cosmos DB. The frontend currently targets a specific Azure Static Web Apps API URL in `public/assets/js/script.js`.
 
-- Azure Static Web Apps
-- Azure Functions
-- Azure Storage (Tables)
-- GitHub Actions
-- Python
-- JavaScript
+## Repository structure
 
-## Deployment
+```text
+public/
+  index.html                     Resume webpage
+  assets/css/style.css           Styles
+  assets/js/script.js            Visitor-counter client
+  assets/images/profile.jpeg     Profile image
+api/
+  GetVisitorCount/__init__.py     Counter implementation
+  GetVisitorCount/function.json   HTTP trigger definition
+  requirements.txt               API dependencies
+.github/workflows/
+  deploy-pages.yml               GitHub Pages deployment
+  azure-static-web-apps-*.yml     Azure Static Web Apps deployment
+```
 
-### GitHub Pages Deployment
-The static website is automatically deployed to GitHub Pages when changes are pushed to the `main` branch. To set this up:
+## Preview the website locally
 
-1. Go to your repository settings
-2. Navigate to "Pages" under "Code and automation"
-3. Under "Build and deployment":
-   - Set Source to "GitHub Actions"
-   - The workflow will handle the rest automatically
+From the repository root:
 
-The site will be available at `https://bikilath.github.io/cloud-resume/`
+```bash
+python3 -m http.server 8000 --directory public
+```
 
-No additional secrets are required as GitHub Pages deployment uses built-in GitHub token and permissions.
+Open `http://localhost:8000`. This serves the frontend only. The JavaScript still calls the configured Azure endpoint; the counter can show an offline state if that endpoint is unavailable or rejects the origin.
 
-### Azure Deployment
-The application can also be deployed to Azure through GitHub Actions when changes are pushed to the `main` branch.
+## Deployment configuration
 
-## Visitor Counter
+### GitHub Pages
 
-The visitor counter is implemented using:
-1. Frontend JavaScript that calls an API
-2. Azure Function (Python) that increments a counter
-3. Azure Table Storage to persist the count
+The Pages workflow uploads `public/` and runs on pushes to `main` or `pages`, or a manual trigger. Configure repository Pages settings to use GitHub Actions. Pages hosts the static files; it does not run the Python API.
+
+### Azure Static Web Apps
+
+The Azure workflow uses `public/` for the application and `api/` for the API. It runs for pushes to `main` and selected pull-request events, which may create preview deployments. It references a repository deployment-token secret. Configure the corresponding Azure resource and secret before using this workflow in another repository.
+
+The API expects `AzureWebJobsStorage` in its environment and a `VisitorCounts` table. Configure connection strings in application settings, never in committed files. Replace the frontend API URL and configure allowed origins for your own deployment.
+
+## Current limitations and next improvements
+
+This is a learning project; deployment success and live availability must be checked in the target environment.
+
+- The Python API mixes decorator-based registration with a `function.json` layout, and the repository lacks `host.json`. Standardize the Functions project layout before documenting a complete local backend workflow.
+- CORS headers currently target the Azure site, so GitHub Pages and local previews require additional configuration.
+- The counter uses a read-modify-write operation; concurrent requests can lose increments. Add concurrency control before treating counts as reliable analytics.
+- Improve backend error handling and add API tests.
+- Review the deployment action versions and verify both workflows before relying on them.
+- Infrastructure provisioning templates are not currently included in this repository.
+
+## Technologies
+
+Azure Static Web Apps, Azure Functions, Azure Table Storage, GitHub Actions, Python, JavaScript, HTML and CSS.
